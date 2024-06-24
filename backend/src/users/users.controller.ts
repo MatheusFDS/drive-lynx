@@ -34,7 +34,6 @@ export class UsersController {
   async findAll(@Request() req) {
     this.logger.debug('Fetching all users');
     this.logger.debug(`User role: ${req.user.roleId}`);
-    this.logger.debug(`Request user: ${JSON.stringify(req.user)}`);
     if (req.user.roleId === Role.SuperAdmin) {
       return this.usersService.findAll();
     }
@@ -45,9 +44,11 @@ export class UsersController {
   @Roles(Role.Admin, Role.SuperAdmin)
   async findOne(@Param('id') id: string, @Request() req) {
     this.logger.debug(`Fetching user with ID: ${id}`);
-    this.logger.debug(`Request user: ${JSON.stringify(req.user)}`);
+    if (req.user.roleId === Role.SuperAdmin) {
+      return this.usersService.findOne(id);
+    }
     const user = await this.usersService.findOne(id);
-    if (req.user.roleId === Role.SuperAdmin || user.tenantId === req.user.tenantId) {
+    if (user.tenantId === req.user.tenantId) {
       return user;
     }
     throw new ForbiddenException('You do not have access to this user');
@@ -57,9 +58,11 @@ export class UsersController {
   @Roles(Role.Admin, Role.SuperAdmin)
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Request() req) {
     this.logger.debug(`Updating user with ID: ${id}`);
-    this.logger.debug(`Request user: ${JSON.stringify(req.user)}`);
+    if (req.user.roleId === Role.SuperAdmin) {
+      return this.usersService.update(id, updateUserDto);
+    }
     const user = await this.usersService.findOne(id);
-    if (req.user.roleId === Role.SuperAdmin || user.tenantId === req.user.tenantId) {
+    if (user.tenantId === req.user.tenantId) {
       return this.usersService.update(id, updateUserDto);
     }
     throw new ForbiddenException('You do not have access to update this user');
@@ -69,9 +72,11 @@ export class UsersController {
   @Roles(Role.Admin, Role.SuperAdmin)
   async remove(@Param('id') id: string, @Request() req) {
     this.logger.debug(`Deleting user with ID: ${id}`);
-    this.logger.debug(`Request user: ${JSON.stringify(req.user)}`);
+    if (req.user.roleId === Role.SuperAdmin) {
+      return this.usersService.remove(id);
+    }
     const user = await this.usersService.findOne(id);
-    if (req.user.roleId === Role.SuperAdmin || user.tenantId === req.user.tenantId) {
+    if (user.tenantId === req.user.tenantId) {
       return this.usersService.remove(id);
     }
     throw new ForbiddenException('You do not have access to delete this user');

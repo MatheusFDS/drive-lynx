@@ -1,0 +1,15 @@
+
+post http://localhost:3000/auth/register
+{
+  "email": "newuser@example.com",
+  "password": "password123",
+  "name": "New User",
+  "roleId": "role-id-102",  // Substitua pelo ID real da função de usuário
+  "tenantId": "tenant-id-101"  // Substitua pelo ID real do tenant
+}
+
+post http://localhost:3000/auth/login
+{
+  "email": "admin@example.com",
+  "password": "password123"
+}

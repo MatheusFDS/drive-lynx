@@ -1,18 +1,19 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { ROLES_KEY } from '../roles.decorator';
+import { ConfigService } from '@nestjs/config';
 import { Role } from '../roles.enum';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector, private jwtService: JwtService) {}
+  constructor(
+    private reflector: Reflector,
+    private jwtService: JwtService,
+    private configService: ConfigService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    const roles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const roles = this.reflector.get<Role[]>('roles', context.getHandler());
     if (!roles) {
       return true;
     }
@@ -20,19 +21,18 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = request.headers.authorization?.split(' ')[1];
     if (!token) {
-      throw new ForbiddenException('Token not provided');
+      return false;
     }
 
-    let payload;
     try {
-      payload = this.jwtService.verify(token);
+      const decoded = this.jwtService.verify(token, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+
+      request.user = decoded;
+      return roles.includes(decoded.roleId);
     } catch (err) {
-      throw new ForbiddenException('Invalid token');
+      return false;
     }
-
-    request.user = payload;
-
-    const userRole = payload.roleId;
-    return roles.some((role) => role === userRole);
   }
 }

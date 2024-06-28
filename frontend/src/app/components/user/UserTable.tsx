@@ -9,7 +9,7 @@ interface UserTableProps {
 
 export default function UserTable({ users, onEdit, onDelete }: UserTableProps) {
   return (
-    <table className="min-w-full bg-gray-300 border-none">
+    <table className="min-w-full bg-white border">
       <thead>
         <tr>
           <th className="py-2 px-4 border-b">Nome</th>
